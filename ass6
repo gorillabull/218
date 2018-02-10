@@ -1,0 +1,748 @@
+;  CS 218, Assignment #6
+;  Provided Main
+
+;  Write a simple assembly language program to:
+;	convert base-36/ASCII charatcers into an integer
+;	convert an integer to base-36/ASCII charatcers
+
+
+; **********************************************************************************
+;  STEP #3
+;  Macro, "b362int", to convert a base-36/ASCII string
+;  into an unsigned integer.  The macro reads the ASCII string (byte-size,
+;  NULL terminated) and converts to a doubleword sized integer.
+;	- Accepts both upper and lower case (which are treated as the same thing).
+;	- Assumes valid/correct data.  As such, no error checking is performed.
+;  Skips leading blanks.
+
+;  Example:  given the ASCII string: " 7CLZI", NULL
+;  The is,  " " (blank), followed by "7", followeed by "C", followed
+;  by "L", followed by "Z", followed by "I" and NULL would be
+;  converted to integer 12345678.
+
+; -----
+;  Arguments
+;	%1 -> string address (reg)
+;	%2 -> integer number (destination address)
+
+
+%macro	b362int	2
+	push	rax
+	push	rcx
+	push	rsi
+	push	rdi
+
+
+;	YOUR CODE GOES HERE
+
+mov r14,  %1
+mov eax, r14d
+;bla bla bla fix this 
+;convert to base 10 
+	;reset all local variables 
+mov         dword  [ind],0  
+  mov         dword  [pow],8  
+  mov         dword  [%2],0  
+  mov         byte  [charr],0  
+  mov         dword  [num],0  
+  mov         dword  [multiplier],0  
+  mov         dword  [pow_iter],0  
+
+	;loop over the number string 
+	%%LoopBase36To10Start:
+  cmp         dword  [ind],10   
+  jge         %%loop1End
+	
+	;	;the current read character from the string 
+mov r14d, eax;
+
+  mov         eax,dword  [ind]  
+add r14d, eax
+  ;mov         cl,byte  r14d[eax]  ;%1[eax]
+mov cl, byte [r14d] ;
+  mov         byte  [charr],cl  
+	;	num = 0;				
+  mov         dword  [num],0  
+
+
+		;check if char is upper case 
+  movsx       eax,byte  [charr]  
+  cmp         eax,90;  
+  jle         %%IFuppercase
+		
+	;		compute upper case value for char 
+  movsx       eax,byte  [charr]  
+  sub         eax, 87 
+  mov         dword  [num],eax  
+		
+	;	check if char is lowercase 
+		%%IFuppercase:
+  movsx       eax,byte  [charr]  
+  cmp         eax,90 ;5Ah  
+  jg          %%IFlowercase
+		
+	;		compute lower case value for char 
+  movsx       eax,byte  [charr]  
+  sub         eax,55;	
+  mov         dword  [num],eax  
+		
+	;	check if char is a digit 
+		%%IFlowercase:
+  movsx       eax,byte  [charr]  
+  cmp         eax,57	;39h  
+  jg         %%IFdigit 
+		
+	;		compute digit value for char 
+  movsx       eax,byte  [charr]  
+  sub         eax, 48 ;
+  mov         dword  [num],eax  
+		
+;		check if the current char is a blank space 
+		%%IFdigit:
+  movsx       eax,byte  [charr]  
+  cmp         eax,32 ;
+  jne         %%IFspace
+		
+  mov         dword  [num],0  
+		
+	;	reset power calculation variable 
+		%%IFspace:
+  movsx eax, byte[charr]
+test eax,eax
+jne %%IFNull
+mov dword[num],0
+
+%%IFNull:
+  mov         dword  [multiplier],1  
+	;	reset power loop variable to 0
+  mov         dword  [pow_iter],0  
+	;	calculate power value in a loop 
+		%%PowerLoopStart:
+  mov         eax,dword  [pow_iter]  
+	;	calculate power value in a loop 
+  cmp         eax,dword  [pow]  
+  jge        %%PowerLoopend
+		
+	;		compute power of 36
+  imul        eax,dword  [multiplier],36 ;24h  
+  mov         dword  [multiplier],eax  
+	;		increment index for power calculation 
+  mov         eax,dword  [pow_iter]  
+  add         eax,1  
+  mov         dword  [pow_iter],eax  
+		
+  jmp        %%PowerLoopStart
+	;	convert digit to base 10 and add it to total 
+		%%PowerLoopend:
+  mov         eax,dword  [num]  
+  imul        eax,dword  [multiplier]  
+  add         eax,dword  [%2]  
+  mov         dword  [%2],eax  
+	;	increment inner index 
+  mov         eax,dword  [ind]  
+  add         eax,1  
+  mov         dword  [ind],eax  
+	;	decrement variable for power loop 
+  mov         eax,dword  [pow]  
+  sub         eax,1  
+  mov         dword  [pow],eax  
+	
+  jmp         %%LoopBase36To10Start
+
+	%%loop1End:
+
+
+	pop	rdi
+	pop	rsi
+	pop	rcx
+	pop	rax
+%endmacro
+
+; **********************************************************************************
+;  STEP #4
+;  Macro, "int2b36", to convert an unsigned base-10 integer into an
+;  ASCII string representing the undecimal value.  The macro stores
+;  the result into an ASCII string (byte-size, right justified,
+;  blank filled, NULL terminated).  Each integer is a doubleword value.
+;  Assumes valid/correct data.  As such, no error checking is performed.
+
+; -----
+;  Arguments
+;	%1 -> integer number
+;	%2 -> string address
+
+%macro	int2b36	2
+	push	rax
+	push	rbx
+	push	rcx
+	push	rdx
+	push	rsi
+	push	rdi
+
+
+;	YOUR CODE GOES HERE
+;base 10 to 36 
+;clear the string 
+mov eax, %2
+mov byte[eax] ,32
+inc eax
+mov byte[eax] ,32
+inc eax
+mov byte[eax] ,32
+inc eax
+mov byte[eax] ,32
+inc eax
+mov byte[eax] ,32
+inc eax
+mov byte[eax] ,32
+inc eax
+mov byte[eax] ,32
+inc eax
+mov byte[eax] ,32
+inc eax
+mov byte[eax] ,32
+inc eax
+mov byte[eax] ,0
+inc eax
+mov         dword  [rem],0  
+
+mov         dword  [reverse],9  
+;loop until the integer goes to zero
+%%LoopConvertToBase36Start:
+cmp         dword  [%1],0  
+je          %%LoopConvertToBase36From10End
+
+;	perform modulus to get remainder 
+mov         eax,dword  [%1]  
+cdq  
+mov         ecx, 36;   
+idiv        eax,ecx  
+mov         dword  [rem],edx  
+;	calculate next number to convert after modulus 
+mov         eax,dword  [%1]  
+sub         eax,dword  [rem]  
+cdq  
+mov         ecx,36;   
+idiv        eax,ecx  
+mov         dword  [%1],eax  
+;	check if rem is greater than 9 
+cmp         dword  [rem],9  
+jle        %%IfBiggerThanNine
+	
+		;if a letter convert to upper case 
+		;rem = rem + 55;
+mov         eax,dword  [rem]  
+add         eax,55	;37h  
+mov         dword  [rem],eax  
+	
+;	check if number is less than or equal to 9 
+	%%IfBiggerThanNine:
+cmp         dword  [rem],9  
+jg          %%LessOrEqualTonine
+	
+;	if true, increment to digit  char 
+mov         eax,dword  [rem]  
+add         eax,48 ;  
+mov         dword  [rem],eax  
+	
+
+;	copy character into string 
+	%%LessOrEqualTonine:
+mov         eax,dword  [reverse]  
+mov         cl,byte  [rem]  
+mov byte %2[eax],cl 
+;	decrement reverse 
+mov         eax,dword  [reverse]  
+sub         eax,1  
+mov         dword  [reverse],eax  
+
+
+jmp         %%LoopConvertToBase36Start
+%%LoopConvertToBase36From10End:
+
+
+
+	pop	rdi
+	pop	rsi
+	pop	rdx
+	pop	rcx
+	pop	rbx
+	pop	rax
+%endmacro
+
+; --------------------------------------------------------------
+;  Simple macro to display a string to the console.
+;	Call:	printString  <stringAddr>
+
+;	Arguments:
+;		%1 -> <stringAddr>, string address
+
+;  Count characters (excluding NULL).
+;  Display string starting at address <stringAddr>
+
+%macro	printString	1
+	push	rax			; save altered registers
+	push	rdi
+	push	rsi
+	push	rdx
+	push	rcx
+
+	mov	rdx, 0
+	mov	rdi, %1
+%%countLoop:
+	cmp	byte [rdi], NULL
+	je	%%countLoopDone
+	inc	rdi
+	inc	rdx
+	jmp	%%countLoop
+%%countLoopDone:
+
+	mov	rax, SYS_write		; system call for write (SYS_write)
+	mov	rdi, STDOUT		; standard output
+	mov	rsi, %1			; address of the string
+	syscall				; call the kernel
+
+	pop	rcx			; restore registers to original values
+	pop	rdx
+	pop	rsi
+	pop	rdi
+	pop	rax
+%endmacro
+
+; --------------------------------------------------------------
+
+section	.data
+
+; -----
+;  Define standard constants.
+
+TRUE		equ	1
+FALSE		equ	0
+
+SUCCESS		equ	0			; successful operation
+NOSUCCESS	equ	1			; unsuccessful operation
+
+STDIN		equ	0			; standard input
+STDOUT		equ	1			; standard output
+STDERR		equ	2			; standard error
+
+SYS_read	equ	0			; system call code for read
+SYS_write	equ	1			; system call code for write
+SYS_open	equ	2			; system call code for file open
+SYS_close	equ	3			; system call code for file close
+SYS_fork	equ	57			; system call code for fork
+SYS_exit	equ	60			; system call code for terminate
+SYS_creat	equ	85			; system call code for file open/create
+SYS_time	equ	201			; system call code for get time
+
+LF		equ	10
+SPACE		equ	" "
+NULL		equ	0
+ESC		equ	27
+
+
+;;more vars 
+ind dd 0 
+pow dd 8 
+fnum dd 0
+charr db  0
+num dd 0
+multiplier dd 0 
+pow_iter dd 0 
+theNumber dd 12345678 ; replace with variable to be converted 
+rem dd 0 
+reverse dd 9
+
+rdihelp dd 0 
+; -----
+;  Variables and constants.
+
+MAX_STR_SIZE	equ	10			; note, includes the NULL
+NUMS_PER_LINE	equ	5
+
+newline		db	LF, NULL
+
+; -----
+;  Misc. string definitions.
+
+hdr1		db	"--------------------------------------------"
+		db	LF, "CS 218 - Assignment #6", LF
+		db	LF, NULL
+hdr2		db	LF, LF, "----------------------"
+		db	LF, "List Sums"
+		db	LF, NULL
+
+firstNum	db	"----------------------", LF
+		db	"Test Number (base-36):      ", NULL
+firstNumMul	db	"Test Number * 5 (base-36): ", NULL
+
+lstSum1		db	LF, "List Sum (short list):"
+		db	LF, NULL
+lstSum2		db	LF, "List Sum (long list):"
+		db	LF, NULL
+
+; -----
+;  Misc. data definitions (if any).
+
+
+
+; -----
+;  Assignment #6 Provided Data:
+
+uStr1		db	"    7CLZI", NULL
+iNum1		dd	0
+
+dStrLst1	db	"     1C9H", NULL, "   3AbQT1", NULL, "   1RtQY2", NULL
+		db	"    82AZ3", NULL, "   CLwy13", NULL
+len1		dd	5
+sum1		dd	0
+
+dStrLst2	db	"      3W8", NULL, "    X6KP1", NULL, "    1gkjd", NULL
+		db	"   2KD0W0", NULL, "    AJNSS", NULL, "    1fsa0", NULL
+		db	"    224d2", NULL, "    A1ef0", NULL, "    12301", NULL
+		db	"     MDKL", NULL, "        a", NULL, "       36", NULL
+		db	"      7x1", NULL, "    Rx009", NULL, "     ajd8", NULL
+		db	"    HELLO", NULL, "    v23X9", NULL, "   qz1kjh", NULL
+		db	"     1BYE", NULL, "    1TRM1", NULL, "    r1GFW", NULL
+		db	"    2FRED", NULL, "    HJEEq", NULL, "    31kmq", NULL
+		db	"     ANdy", NULL, "    WAXER", NULL, "    st420", NULL
+		db	"    HOMER", NULL, "    2JHW6", NULL, "    q5182", NULL
+len2		dd	30
+sum2		dd	0
+
+
+; **********************************************************************************
+
+section	.bss
+
+num1String	resb	MAX_STR_SIZE
+tempString	resb	MAX_STR_SIZE
+tempNum		resd	1
+
+
+; **********************************************************************************
+
+section	.text
+global	_start
+_start:
+
+; **********************************************************************************
+;  Main program
+;	display headers
+;	performs conversions (not using macro)
+;	loops to call the macro on various data items
+;	display results to screen (via provided macro's)
+
+;  Note, since the print macros do NOT perform an error checking,
+;  	if the conversion macros do not work correctly,
+;	the print string will not work!
+
+; **********************************************************************************
+;  Prints some cute headers...
+
+	printString	hdr1
+	printString	firstNum
+	printString	uStr1
+	printString	newline
+
+; -----
+;  STEP #1
+;	Convert base-36/ASCII NULL terminated string at
+;	'uStr1' into an integer which should be placed into 'iNum1'
+;	Note, 7CLZI (base-36) = 12,345,678 (base-10)
+;	DO NOT USE MACRO HERE!!
+
+
+
+;	YOUR CODE GOES HERE
+
+;initialize return string for macro 2 here to blank spaces 
+mov eax, num1String	 ;add spaces 
+mov dword[eax], 32
+inc eax 
+mov dword[eax], 32
+inc eax 
+mov dword[eax], 32
+inc eax 
+mov dword [eax], 32
+inc eax 
+mov dword[eax], 32
+inc eax 
+mov dword[eax], 32
+inc eax 
+mov dword[eax], 32
+inc eax 
+mov dword[eax], 32
+inc eax 
+mov dword[eax], 32
+inc eax 
+mov dword[eax], 0	;; null terminate 
+
+;convert to base 10 
+	;reset all local variables 
+mov         dword  [ind],0  
+  mov         dword  [pow],8  
+  mov         dword  [iNum1],0  
+  mov         byte  [charr],0  
+  mov         dword  [num],0  
+  mov         dword  [multiplier],0  
+  mov         dword  [pow_iter],0  
+
+	;loop over the number string 
+	LoopBase36To10Start:
+  cmp         dword  [ind],10   
+  jge         loop1End
+	
+	;	;the current read character from the string 
+  mov         eax,dword  [ind]  
+  mov         cl,byte  uStr1[eax]  
+  mov         byte  [charr],cl  
+	;	num = 0;				
+  mov         dword  [num],0  
+
+
+		;check if char is upper case 
+  movsx       eax,byte  [charr]  
+  cmp         eax,90;5Ah  
+  jle         IFuppercase
+		
+	;		compute upper case value for char 
+  movsx       eax,byte  [charr]  
+  sub         eax, 87 ;57h  
+  mov         dword  [num],eax  
+		
+	;	check if char is lowercase 
+		IFuppercase:
+  movsx       eax,byte  [charr]  
+  cmp         eax,90 ;5Ah  
+  jg          IFlowercase
+		
+	;		compute lower case value for char 
+  movsx       eax,byte  [charr]  
+  sub         eax,55;	37h  
+  mov         dword  [num],eax  
+		
+	;	check if char is a digit 
+		IFlowercase:
+  movsx       eax,byte  [charr]  
+  cmp         eax,57	;39h  
+  jg         IFdigit 
+		
+	;		compute digit value for char 
+  movsx       eax,byte  [charr]  
+  sub         eax, 48 ;30h  
+  mov         dword  [num],eax  
+		
+;		check if the current char is a blank space 
+		IFdigit:
+  movsx       eax,byte  [charr]  
+  cmp         eax,32 ;20h  
+  jne         IFspace
+		
+	
+  mov         dword  [num],0  
+
+	;	reset power calculation variable 
+		IFspace:
+  movsx eax, byte[charr]
+test eax,eax
+jne IFNull
+mov dword[num],0
+
+IFNull:
+  mov         dword  [multiplier],1  
+	;	reset power loop variable to 0
+  mov         dword  [pow_iter],0  
+	;	calculate power value in a loop 
+		PowerLoopStart:
+  mov         eax,dword  [pow_iter]  
+	;	calculate power value in a loop 
+  cmp         eax,dword  [pow]  
+  jge        PowerLoopend
+		
+	;		compute power of 36
+  imul        eax,dword  [multiplier],36 ;24h  
+  mov         dword  [multiplier],eax  
+	;		increment index for power calculation 
+  mov         eax,dword  [pow_iter]  
+  add         eax,1  
+  mov         dword  [pow_iter],eax  
+		
+  jmp        PowerLoopStart
+	;	convert digit to base 10 and add it to total 
+		PowerLoopend:
+  mov         eax,dword  [num]  
+  imul        eax,dword  [multiplier]  
+  add         eax,dword  [iNum1]  
+  mov         dword  [iNum1],eax  
+	;	increment inner index 
+  mov         eax,dword  [ind]  
+  add         eax,1  
+  mov         dword  [ind],eax  
+	;	decrement variable for power loop 
+  mov         eax,dword  [pow]  
+  sub         eax,1  
+  mov         dword  [pow],eax  
+	
+  jmp         LoopBase36To10Start
+
+	loop1End:
+
+; -----
+;  Perform (iNum1 * 5) operation.
+;	Note, 12,345,678 (base-10) * 5 (base-10) = 61,728,390 (base-10)
+
+	mov	eax, dword [iNum1]
+	mov	ebx, 5
+	imul	ebx
+	mov	dword [iNum1], eax
+
+; -----
+;  STEP #2
+;	Convert the base-10 integer (iNum1) into a base-36/ASCII string
+;	which should be stored into the 'num1String'
+;	Note, 61,728,390 (base-10) = 10R1XI (base-36)
+;	DO NOT USE MACRO HERE!!
+
+
+;	YOUR CODE GOES HERE
+;base 10 to 36 
+
+mov         dword  [rem],0  
+
+mov         dword  [reverse],9  
+;loop until the integer goes to zero
+LoopConvertToBase36Start:
+cmp         dword  [iNum1],0  
+je          LoopConvertToBase36From10End
+
+;	perform modulus to get remainder 
+mov         eax,dword  [iNum1]  
+cdq  
+mov         ecx, 36;   
+idiv        eax,ecx  
+mov         dword  [rem],edx  
+;	calculate next number to convert after modulus 
+mov         eax,dword  [iNum1]  
+sub         eax,dword  [rem]  
+cdq  
+mov         ecx,36;   
+idiv        eax,ecx  
+mov         dword  [iNum1],eax  
+;	check if rem is greater than 9 
+cmp         dword  [rem],9  
+jle        IfBiggerThanNine
+	
+		;if a letter convert to upper case 
+		;rem = rem + 55;
+mov         eax,dword  [rem]  
+add         eax,55	;37h  
+mov         dword  [rem],eax  
+	
+;	check if number is less than or equal to 9 
+	IfBiggerThanNine:
+cmp         dword  [rem],9  
+jg          LessOrEqualTonine
+	
+;	if true, increment to digit  char 
+mov         eax,dword  [rem]  
+add         eax,48 ;  
+mov         dword  [rem],eax  
+	
+
+;	copy character into string 
+	LessOrEqualTonine:
+mov         eax,dword  [reverse]  
+mov         cl,byte  [rem]  
+mov         byte  num1String[eax],cl  
+;	decrement reverse 
+mov         eax,dword  [reverse]  
+sub         eax,1  
+mov         dword  [reverse],eax  
+
+
+jmp         LoopConvertToBase36Start
+LoopConvertToBase36From10End:
+
+
+; -----
+;  Display a simple header and then the ASCII/undecimal string.
+
+	printString	firstNumMul
+	printString	num1String
+
+
+; **********************************************************************************
+;  Next, loop to repeatedly call the macro on each value in an array.
+
+	printString	hdr2
+
+; ==================================================
+;  Data Set #1 (short list)
+
+	mov	ecx, dword [len1]		; length
+	mov	rsi, 0				; starting index of integer list
+	mov	rdi, dStrLst1			; address of string
+
+cvtLoop1:
+	push	rcx
+	push	rdi
+
+	b362int	rdi, tempNum
+
+	mov	eax, dword [tempNum]
+	add	dword [sum1], eax
+
+	pop	rdi
+	add	rdi, MAX_STR_SIZE
+
+	pop	rcx
+	dec	rcx				; check length
+	cmp	rcx, 0
+	ja	cvtLoop1
+
+	int2b36	sum1, tempString		; convert integer (eax) into undecimal string
+
+	printString	lstSum1			; display header string
+	printString	tempString		; print string
+	printString	newline
+
+; ==================================================
+;  Data Set #2 (long list)
+
+	mov	rcx, [len2]			; length
+	mov	rsi, 0				; starting index of integer list
+	mov	rdi, dStrLst2			; address of string
+
+cvtLoop2:
+	push	rcx
+	push	rdi
+
+	b362int	rdi, tempNum
+
+	mov	eax, dword [tempNum]
+	add	dword [sum2], eax
+
+	pop	rdi
+	add	rdi, MAX_STR_SIZE
+
+	pop	rcx
+	dec	rcx				; check length
+	cmp	rcx, 0
+	ja	cvtLoop2
+
+	int2b36	sum2, tempString		; convert integer (eax) into undecimal string
+
+	printString	lstSum2			; display header string
+	printString	tempString		; print string
+	printString	newline
+	printString	newline
+
+
+; **********************************************************************************
+; Done, terminate program.
+
+last:
+	mov	rax, SYS_exit
+	mov	rbx, SUCCESS
+	syscall
