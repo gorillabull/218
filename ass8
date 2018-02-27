@@ -373,77 +373,64 @@ ret
 
 global corrCoefficient
 corrCoefficient:
-	mov	r10, rdx	; rdx = len
-	mov	r13, 0		; holds x*y
-	mov	rax, 0		; multiplies x and y
-	mov	rcx, 0		; counter
-
-x_times_y:
+	mov	r10, rdx	
+	mov	r13, 0		
+	mov	rax, 0		
+	mov	rcx, 0		
+;perform first multiplication in numerator of x*y 
+xXy:
 	mov	eax, dword[rdi+rcx*4]
 	mov	edx, 0
 	mul	dword[rsi+rcx*4]
 	
 	add	rcx, 1
-	;add	dword[r13], eax	; r13 = x*y
-	;add	dword[r13+4], edx
 	add	r13, rax
 
 	cmp	rcx, r10
-	jne	x_times_y
+	jne	xXy
 
-	; --------- END OF x_times_y ---------
+
 
 
 
 	mov	r14, 0		; holds x*x
 	mov	rax, 0		; multiplies x and x
 	mov	rcx, 0		; counter
+;perform second denominator operatiion of x*x 
 
-x_times_x:
+xXx:
 	mov	eax, dword[rdi+rcx*4]
 	mov	edx, 0
 	mul	dword[rdi+rcx*4]
 	
 	add	rcx, 1
-	;add	dword[r14], eax	; r14 = x*x
-	;add	dword[r14+4], edx
 	add	r14, rax
 
 	cmp	rcx, r10
-	jne	x_times_x
-	; --------- END OF x_times_x ---------
+	jne	xXx
 
 
 
 	mov	r15, 0		; holds y*y
 	mov	rax, 0		; multiplies y and y
 	mov	rcx, 0		; counter
-
-y_times_y:
+;perform third denominator operation of y*y 
+yXy:
 	mov	eax, dword[rsi+rcx*4]
 	mov	edx, 0
 	mul	dword[rsi+rcx*4]
 	
 	add	rcx, 1
-	;add	dword[r15], eax	; r15 = y*y
-	;add	dword[r15+4], edx
 	add	r15, rax
 
 	cmp	rcx, r10
-	jne	y_times_y
-	; --------- END OF y_times_y ---------
+	jne	yXy
 
 
-
-;*****************************************************************
-;!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%
-;*****************************************************************
-;!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%
-;*****************************************************************
-
-	mov		rax, r14	; r13 = sum of (x^2)s
+	;add up the sums of products 
+	mov		rax, r14	; 
 	mov		rdx, 0
-	mul		r15		; r14 = sum of (y^2)s 
+	mul		r15		; 
 
 
 	cvtsi2sd	xmm0, r13	; r13 = sum of (x)s *(y)s
