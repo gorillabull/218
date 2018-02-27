@@ -1,0 +1,423 @@
+;removed static variable usage from all functions 
+;  CS 218 - Assignment 8
+;  Functions Template.
+
+; --------------------------------------------------------------------
+;  Write four assembly language functions.
+
+;  The function, shellSort(), sorts the numbers into ascending
+;  order (small to large).  Uses the shell sort algorithm from
+;  assignment #7 (modified to sort in descending order).
+
+;  The function, basicStats(), finds the minimum, median, and maximum,
+;  sum, and average for a list of numbers.
+;  The listMedian function mist be called.
+
+;  The function, listMedian(), to find the median of a list of
+;  sorted numbers.
+
+;  The function, corrCoefficient(), computes the correlation coefficient
+;  for the two data sets.
+
+;  Summation and division performed as integer values.
+
+
+; ********************************************************************************
+
+section	.data
+
+; -----
+;  Define constants.
+
+TRUE		equ	1
+FALSE		equ	0
+
+rem dd 0;
+reverse dd 0;
+h dd 0 ;
+i dd 0; 
+j dd 0 ;
+tmp dd 0;
+; -----
+;  Variables for shellSort() function (if any).
+
+
+
+; -----
+;  Variables for basicStats() function (if any).
+
+
+
+; -----
+;  Variables for corrCoefficient() function (if any).
+
+
+
+; ********************************************************************************
+
+section	.text
+
+; ********************************************************************
+;  Shell sort function.
+
+; -----
+;  HLL Call:
+;	call shellSort(list, len)
+
+;  Arguments Passed:
+;	1) list, addr - rdi
+;	2) length, value - rsi
+
+;  Returns:
+;	sorted list (list passed by reference)
+
+
+;	YOUR CODE GOES HERE
+
+
+global shellSort
+shellSort:
+
+mov r13, rdi; first param
+mov r14, rsi ;second param 
+
+
+;allocate some local memory
+push rbp 
+mov rbp, rsp 
+sub rsp, 200 ; 50 dwords 
+
+;push any registers to be preserved. 
+;locals used: h,j, i and tmp 
+; h = rbp-200
+; j = rbp - 196;
+; i = rbp - 192 
+;tmp = rbp -188 ; 
+
+;init locals 
+mov dword[rbp-200], 0
+mov dword[rbp-196], 0
+mov dword[rbp-192], 0
+mov dword[rbp-188], 0
+
+;;while ((h*3+1)< len )
+initWhileLoop:  
+imul        eax,dword  [rbp-200 ],3  
+  add         eax,1  
+  cmp         eax,r14d  
+  jae         initWhileLoopend
+	
+		;h = 3 * h + 1;
+  imul        eax,dword  [rbp-200 ],3  
+  add         eax,1  
+  mov         dword  [rbp-200 ],eax  
+	
+  jmp         initWhileLoop 
+
+
+	;while (h>0)
+initWhileLoopend:  cmp         dword  [rbp-200 ],0  
+  jbe         sortingEnd 
+	
+		;for (i = h-1; i < len; i++)
+  mov         eax,dword  [rbp-200 ]  
+  sub         eax,1  
+  mov         dword  [rbp - 192 ],eax  
+  jmp         iLoop1 
+forLoop1Start:  mov         eax,dword  [rbp - 192 ]  
+  add         eax,1  
+  mov         dword  [rbp - 192 ],eax  
+iLoop1:  mov         eax,dword  [rbp - 192 ]  
+  cmp         eax,r14d  
+  jae        forLoopend 
+		
+			;tmp = lst[i];
+  mov         eax,dword  [rbp - 192 ]  
+  mov         ecx,dword   [r13d +eax*4]  ;lst 
+  mov         dword  [rbp - 188 ],ecx  
+			;j = i;
+  mov         eax,dword  [rbp - 192 ]  
+  mov         dword  [rbp - 196 ],eax  
+			;for (j = i; (j>=)&& (lst[j-h] > tmp); j=j-)
+  mov         eax,dword  [rbp - 192 ]  
+  mov         dword  [rbp - 196 ],eax  
+  jmp         forLoop2In 
+forLoop2Start:  mov         eax,dword  [rbp - 196 ]  
+  sub         eax,dword  [rbp-200 ]  
+  mov         dword  [rbp - 196 ],eax  
+forLoop2In:  mov         eax,dword  [rbp - 196 ]  
+  cmp         eax,dword  [rbp-200  ]  
+  jb          forLoop2end  
+  mov         eax,dword  [rbp - 196 ]  
+  sub         eax,dword  [rbp-200 ]  
+  mov         ecx,dword   [r13d +eax*4] ;lst  
+  cmp         ecx,dword  [rbp - 188 ]  
+  jbe         forLoop2end  
+			
+				;lst[j] = lst[j - h];
+  mov         eax,dword  [rbp - 196 ]  
+  sub         eax,dword  [rbp-200 ]  
+  mov         ecx,dword  [rbp - 196 ]  
+  mov         edx,dword    [r13d +eax*4] ;lst  
+  mov         dword    [r13d +ecx*4],edx  ;lst 
+			
+  jmp         forLoop2Start  
+			;lst[j] = tmp;
+forLoop2end:  mov         eax,dword  [rbp - 196 ]  
+  mov         ecx,dword  [rbp - 188 ]  
+  mov         dword    [r13d +eax*4],ecx  ;lst 
+		
+  jmp        forLoop1Start  
+		;h = h / 3;
+forLoopend:  mov         eax,dword  [rbp-200 ]  
+  xor         edx,edx  
+  mov         ecx,3  
+  div         eax,ecx  
+  mov         dword  [rbp-200 ],eax  
+	
+  jmp         initWhileLoopend  
+sortingEnd: 
+
+mov rsp, rbp  ;clear 
+pop rbp 
+
+ret 
+
+
+
+
+
+; ********************************************************************
+;  Find basic statistical information for a list of integers:
+;	minimum, median, maximum, sum, and average
+
+;  Note, for an odd number of items, the median value is defined as
+;  the middle value.  For an even number of values, it is the integer
+;  average of the two middle values.
+
+;  Note, the list is already sorted.
+
+; -----
+;  HLL Call:
+;	call basicStats(list, len, min, med, max, sum, ave)
+
+;  Arguments Passed:
+;	1) list, addr - rdi
+;	2) length, value - rsi
+;	3) minimum, addr - rdx
+;	4) median, addr - rcx
+;	5) maximum, addr - r8
+;	6) sum, addr - r9
+;	7) ave, addr - stack, rbp+16
+
+;  Returns:
+;	minimum, median, maximum, sum, and average
+;	via pass-by-reference (addresses on stack)
+
+
+;	YOUR CODE GOES HERE
+global basicStats
+basicStats:
+
+	
+	
+	
+  mov r10, rdi ;xlist 
+  mov r11 ,rsi ;length value 
+  mov r12, rdx  ;xminl
+  mov r13, rcx ; xmedl
+  mov r14 , r8 ;max 
+  mov r15, r9; sum 
+  ;pop r8 ;ave 
+  push rbp ;
+  mov rbp, rsp 
+  mov r8, qword[rbp+16]; ave  (call frame + 1st arg)  
+  
+  	push r10
+	push r11 
+	push r12 
+	push r13 
+	push r14 
+	push r15 
+  ;min 
+mov         eax,4
+mov ecx, 0 
+mul ecx 
+mov ecx, eax ;
+
+;imul        ecx,eax,0  
+mov         edx,dword  [edi + ecx]  ;xlist [0]
+mov         dword  [r12d],edx ;address in r12 is xmin  
+
+
+;max = lst[len - 1];
+mov         eax,r11d ; dword  [len ]  
+dec eax; ; subtract 1 
+mov ebx, 4;
+mul ebx;
+add eax, edi; lst ;add address of list 
+;max = lst[len - 1];
+mov         ecx,dword  [eax]  
+mov         dword  [r14d ],ecx ;max  
+
+
+
+;sum 
+mov         ebx,0 ; dword  [iterator ]  
+sumLoopStart:  
+cmp         ebx,r11d ;dword  [len ]  
+jae         loopCalculateSum  
+
+;sum += lst[iterator];
+mov         eax,ebx  
+mov         ecx,dword  [r15d ] ;sum   
+add         ecx,dword   [r10d + eax*4]  ;lst
+mov         dword  [r15d ],ecx  ;sum 
+;iterator++;
+;mov         eax,dword  [iterator ]  
+;add         eax,1  
+;mov         dword  [iterator ],eax  
+add ebx, 1 
+
+jmp         sumLoopStart 
+
+;avg = sum / len;
+loopCalculateSum: mov         eax,dword  [r15d ]   ;r15d
+;xor         edx,edx  lol
+mov edx, 0
+div         rsi 
+mov         dword  [r8d ],eax   ;ave addr in r8 
+
+;call merian function
+mov rdi, r10
+mov rsi , r11 
+call listMedian
+mov dword[r13], eax 
+
+
+
+	pop r15 
+	pop r14
+	pop r13 
+	pop r12 
+	pop r11 
+	pop r10 
+	pop rbp 
+	
+	ret 
+
+; ********************************************************************
+;  Function to calculate the estimated median of an unsorted list.
+
+; -----
+;  HLL Call:
+;	ans = listMedian(lst, len)
+
+;  Arguments Passed:
+;	- list, address
+;	- length, value
+
+;  Returns:
+;	median (in eax)
+
+
+;	YOUR CODE GOES HERE
+ 
+ ;mov rdi address
+ ;mov rsi, dword [len]
+  ;int listMedian(address, length)
+  
+global listMedian
+listMedian:
+mov r8, rdi; address
+mov r9, rsi ;length value of array 
+mov ebx, 0 ;store med in here 
+;med = lst[len / 2];
+;save 
+push r14
+
+mov         eax,r9d 
+shr         eax,1 ;div by 2 
+mov r14d, eax ; first value   
+dec 	      eax; second value 
+mov         ecx,dword   [r8d + eax*4]  ;lst
+mov         ebx,ecx  			;med 
+mov ecx , dword [r8d + r14d*4];lst
+add ebx,ecx 
+mov eax, ebx
+shr eax ,1 ;divide since its the 2 middle values 
+; this isnt nesessary mov dword [med],eax  
+
+pop r14 ;restore 
+
+ret 
+
+; ********************************************************************
+;  Function to calculate the correlation coefficient
+;  between two lists (of equal size).
+
+; -----
+;  HLL Call:
+;	r = corrCoefficient(xList, yList, len)
+
+;  Arguments Passed:
+;	1) xList, addr - rdi
+;	2) yList, addr - rsi
+;	3) length, value - rdx
+
+;  Returns:
+;	r value (in eax)
+
+
+;	YOUR CODE GOES HERE
+global corrCoefficient
+corrCoefficient:
+
+mov r14, 0;use this as iterator
+mov r8, rdi; address of some list 
+mov r9, rsi ; sec list YY
+movsxd r10, edx ;edx contains length 
+;registers used to store sums 
+mov ebx, 0 
+mov ecx , 0
+mov r11d, 0
+
+loopStart:
+cmp r14, r10
+jae loopEnd
+;do x*y 
+mov eax, dword[r14 * 4 + r8] ;address of an element in the array 
+mov ebx, dword[r14 * 4 + r9] ; soem other array's element 
+mul ebx 					;take care of x*y 
+add ecx, eax 				;accu in ecx x*y 
+;do x^2 
+mov eax, dword[r14 * 4 + r8 ]
+mul eax						;x*x
+add r11d, eax 				;accu in edx 
+;do y ^2 
+mov eax, dword[r14*4 + r9] 
+mul eax 					;y*y
+add ebx, eax 
+;increment iterator 
+inc r14 ;
+jmp loopStart;
+loopEnd:
+
+;do x^2 * y^2
+mov eax, r11d 
+mul ebx 					; eax = x^2 * y ^2 
+movsxd r12, ecx 
+mov ebx, eax 
+movsxd rax, ebx 
+
+;paste code here
+
+cvtsi2sd	xmm0, r12	; r13 = sum of (x)s *(y)s
+cvtsi2sd	xmm1, rax 	; rax = (x^2)s * (y^2)s
+sqrtsd		xmm1, xmm1	; sqrt()
+divsd		xmm0, xmm1 	; xmm0 = xmm0 /xmm1
+
+ret
+
+; ********************************************************************************
+
