@@ -370,54 +370,87 @@ ret
 
 
 ;	YOUR CODE GOES HERE
+
 global corrCoefficient
 corrCoefficient:
+	mov	r10, rdx	; rdx = len
+	mov	r13, 0		; holds x*y
+	mov	rax, 0		; multiplies x and y
+	mov	rcx, 0		; counter
 
-mov r14, 0;use this as iterator
-mov r8, rdi; address of some list 
-mov r9, rsi ; sec list YY
-movsxd r10, edx ;edx contains length 
-;registers used to store sums 
-mov ebx, 0 
-mov ecx , 0
-mov r11d, 0
+x_times_y:
+	mov	eax, dword[rdi+rcx*4]
+	mov	edx, 0
+	mul	dword[rsi+rcx*4]
+	
+	add	rcx, 1
+	;add	dword[r13], eax	; r13 = x*y
+	;add	dword[r13+4], edx
+	add	r13, rax
 
-loopStart:
-cmp r14, r10
-jae loopEnd
-;do x*y 
-mov eax, dword[r14 * 4 + r8] ;address of an element in the array 
-mov ebx, dword[r14 * 4 + r9] ; soem other array's element 
-mul ebx 					;take care of x*y 
-add ecx, eax 				;accu in ecx x*y 
-;do x^2 
-mov eax, dword[r14 * 4 + r8 ]
-mul eax						;x*x
-add r11d, eax 				;accu in edx 
-;do y ^2 
-mov eax, dword[r14*4 + r9] 
-mul eax 					;y*y
-add ebx, eax 
-;increment iterator 
-inc r14 ;
-jmp loopStart;
-loopEnd:
+	cmp	rcx, r10
+	jne	x_times_y
 
-;do x^2 * y^2
-mov eax, r11d 
-mul ebx 					; eax = x^2 * y ^2 
-movsxd r12, ecx 
-mov ebx, eax 
-movsxd rax, ebx 
+	; --------- END OF x_times_y ---------
 
-;paste code here
 
-cvtsi2sd	xmm0, r12	; r13 = sum of (x)s *(y)s
-cvtsi2sd	xmm1, rax 	; rax = (x^2)s * (y^2)s
-sqrtsd		xmm1, xmm1	; sqrt()
-divsd		xmm0, xmm1 	; xmm0 = xmm0 /xmm1
+
+	mov	r14, 0		; holds x*x
+	mov	rax, 0		; multiplies x and x
+	mov	rcx, 0		; counter
+
+x_times_x:
+	mov	eax, dword[rdi+rcx*4]
+	mov	edx, 0
+	mul	dword[rdi+rcx*4]
+	
+	add	rcx, 1
+	;add	dword[r14], eax	; r14 = x*x
+	;add	dword[r14+4], edx
+	add	r14, rax
+
+	cmp	rcx, r10
+	jne	x_times_x
+	; --------- END OF x_times_x ---------
+
+
+
+	mov	r15, 0		; holds y*y
+	mov	rax, 0		; multiplies y and y
+	mov	rcx, 0		; counter
+
+y_times_y:
+	mov	eax, dword[rsi+rcx*4]
+	mov	edx, 0
+	mul	dword[rsi+rcx*4]
+	
+	add	rcx, 1
+	;add	dword[r15], eax	; r15 = y*y
+	;add	dword[r15+4], edx
+	add	r15, rax
+
+	cmp	rcx, r10
+	jne	y_times_y
+	; --------- END OF y_times_y ---------
+
+
+
+;*****************************************************************
+;!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%
+;*****************************************************************
+;!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%^&*()!@#$%
+;*****************************************************************
+
+	mov		rax, r14	; r13 = sum of (x^2)s
+	mov		rdx, 0
+	mul		r15		; r14 = sum of (y^2)s 
+
+
+	cvtsi2sd	xmm0, r13	; r13 = sum of (x)s *(y)s
+	cvtsi2sd	xmm1, rax 	; rax = (x^2)s * (y^2)s
+	sqrtsd		xmm1, xmm1	; sqrt()
+	divsd		xmm0, xmm1 	; xmm0 = xmm0 /xmm1
 
 ret
 
 ; ********************************************************************************
-
